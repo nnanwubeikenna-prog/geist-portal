@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import {
   Briefcase, MessageSquare, Link2, FileEdit, Calendar, LayoutGrid, User,
   X, Send, Paperclip, Plus, MoreHorizontal, ArrowLeft, AtSign, FileText, Copy, Share2,
+  Upload, Trash2, Bell,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -38,10 +39,16 @@ function Index() {
   const [chatOpen, setChatOpen] = useState(false);
   const isMobile = useIsMobile();
 
+  const jumpToCanvas = () => {
+    setActive("work");
+    setWorkTab("files");
+    if (isMobile) setChatOpen(true);
+  };
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-neutral-50 text-neutral-900 grid grid-cols-[60px_1fr] md:grid-cols-[75px_320px_1fr]">
       <Rail active={active} onChange={setActive} />
-      <ContextColumn active={active} workTab={workTab} setWorkTab={setWorkTab} />
+      <ContextColumn active={active} workTab={workTab} setWorkTab={setWorkTab} onJumpToCanvas={jumpToCanvas} />
       <main className="hidden md:flex min-w-0 border-l border-neutral-200 bg-white">
         <Canvas active={active} />
       </main>
@@ -119,8 +126,8 @@ function RailBtn({
 
 /* ---------------- Column 2: Context Directory ---------------- */
 function ContextColumn({
-  active, workTab, setWorkTab,
-}: { active: RailKey; workTab: WorkTab; setWorkTab: (t: WorkTab) => void }) {
+  active, workTab, setWorkTab, onJumpToCanvas,
+}: { active: RailKey; workTab: WorkTab; setWorkTab: (t: WorkTab) => void; onJumpToCanvas: () => void }) {
   return (
     <aside className="flex flex-col min-w-0 bg-white border-r border-neutral-200 overflow-hidden">
       <div className="h-12 flex items-center justify-between px-4 border-b border-neutral-200">
@@ -129,7 +136,7 @@ function ContextColumn({
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto">
         {active === "work" && <WorkPanel tab={workTab} setTab={setWorkTab} />}
-        {active === "chat" && <ChatListPanel />}
+        {active === "chat" && <ChatListPanel onJumpToCanvas={onJumpToCanvas} />}
         {active === "link" && <LinkPanel />}
         {active === "drafts" && <SimpleList title="Drafts" items={["Q4 Campaign Brief", "Product Launch Memo", "Newsletter Draft"]} />}
         {active === "calendar" && <SimpleList title="Upcoming" items={["Standup — 9:00", "Brand Review — 11:30", "1:1 with Alex — 14:00"]} />}
@@ -142,17 +149,18 @@ function ContextColumn({
 
 function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void }) {
   const tabs: WorkTab[] = ["files", "people", "tools"];
-  const [selectedFile, setSelectedFile] = useState<null | { name: string; date: string }>(null);
-  const files = [
+  const [fileView, setFileView] = useState<"dashboard" | "manager">("dashboard");
+  const [selectedPerson, setSelectedPerson] = useState<null | { name: string; role: string; initials: string }>(null);
+  const [files, setFiles] = useState([
     { name: "Brand_Guide.pdf", date: "Mar 12, 2026" },
     { name: "Q4_Strategy.docx", date: "May 28, 2026" },
     { name: "Audience_Research.xlsx", date: "May 30, 2026" },
-  ];
+  ]);
   const people = [
-    { name: "Jason M.", role: "Head of Q3 Launch" },
-    { name: "Alex Reed", role: "Brand Lead" },
-    { name: "Jordan Kim", role: "Content Strategist" },
-    { name: "Sam Patel", role: "Performance Marketing" },
+    { name: "Jason M.", role: "Head of Q3 Launch", initials: "JM" },
+    { name: "Alex Reed", role: "Brand Lead", initials: "AR" },
+    { name: "Jordan Kim", role: "Content Strategist", initials: "JK" },
+    { name: "Sam Patel", role: "Performance Marketing", initials: "SP" },
   ];
   return (
     <div className="flex flex-col">
@@ -160,7 +168,7 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
         {tabs.map((t) => (
           <button
             key={t}
-            onClick={() => { setTab(t); setSelectedFile(null); }}
+            onClick={() => { setTab(t); setFileView("dashboard"); setSelectedPerson(null); }}
             className={`px-3 py-2 text-xs font-medium capitalize border-b-2 -mb-px transition-colors ${
               tab === t ? "border-neutral-900 text-neutral-900" : "border-transparent text-neutral-500 hover:text-neutral-800"
             }`}
@@ -168,10 +176,12 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
         ))}
       </div>
       <div className="p-3">
-        {tab === "files" && !selectedFile && (
+        {tab === "files" && fileView === "dashboard" && (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
-              <Metric n="12" label="Files" />
+              <button onClick={() => setFileView("manager")} className="text-left">
+                <Metric n="12" label="Files" interactive />
+              </button>
               <Metric n="4" label="Sources" />
             </div>
             <div>
@@ -182,14 +192,26 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
                 ))}
               </div>
             </div>
+          </div>
+        )}
+        {tab === "files" && fileView === "manager" && (
+          <div className="space-y-3">
+            <button
+              onClick={() => setFileView("dashboard")}
+              className="flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back
+            </button>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">File Manager</h3>
+              <span className="text-[10px] text-neutral-500">{files.length} files</span>
+            </div>
+            <button className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-md bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-700">
+              <Upload className="h-3.5 w-3.5" /> Upload New File
+            </button>
             <div className="space-y-1">
-              <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-1 px-1">Ingested Files</p>
               {files.map((f) => (
-                <button
-                  key={f.name}
-                  onClick={() => setSelectedFile(f)}
-                  className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-neutral-50 text-left"
-                >
+                <div key={f.name} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-neutral-50">
                   <div className="h-7 w-7 shrink-0 rounded bg-neutral-200 flex items-center justify-center">
                     <FileText className="h-3.5 w-3.5 text-neutral-600" />
                   </div>
@@ -197,56 +219,62 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
                     <div className="text-xs font-medium truncate">{f.name}</div>
                     <div className="text-[10px] text-neutral-500 truncate">Uploaded {f.date}</div>
                   </div>
-                </button>
+                  <button
+                    onClick={() => setFiles((prev) => prev.filter((x) => x.name !== f.name))}
+                    title="Delete"
+                    className="p-1.5 rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               ))}
             </div>
           </div>
         )}
-        {tab === "files" && selectedFile && (
-          <div className="space-y-3">
-            <button
-              onClick={() => setSelectedFile(null)}
-              className="flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" /> Back
-            </button>
-            <div className="rounded-md border border-neutral-200 p-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded bg-neutral-200 flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-neutral-600" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold truncate">{selectedFile.name}</div>
-                  <div className="text-[10px] text-neutral-500">Uploaded {selectedFile.date}</div>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[11px] uppercase tracking-wider text-neutral-500 px-1">Details</p>
-              <DetailRow k="Type" v={selectedFile.name.split(".").pop()?.toUpperCase() ?? ""} />
-              <DetailRow k="Uploaded" v={selectedFile.date} />
-              <DetailRow k="Owner" v="Jason M." />
-              <DetailRow k="Status" v="Indexed" />
-            </div>
-          </div>
-        )}
-        {tab === "people" && (
+        {tab === "people" && !selectedPerson && (
           <div className="space-y-1">
             {people.map((p) => (
-              <div key={p.name} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-neutral-50">
-                <div className="h-8 w-8 shrink-0 rounded-full bg-neutral-200" />
+              <button
+                key={p.name}
+                onClick={() => setSelectedPerson(p)}
+                className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-neutral-50 text-left"
+              >
+                <div className="h-8 w-8 shrink-0 rounded-full bg-neutral-200 flex items-center justify-center text-[10px] font-semibold text-neutral-700">{p.initials}</div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-medium truncate">{p.name}</div>
                   <div className="text-[10px] text-neutral-500 truncate">{p.role}</div>
                 </div>
-                <button
-                  title="Tag into workflow"
-                  className="p-1.5 rounded-md border border-neutral-200 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-                >
-                  <AtSign className="h-3.5 w-3.5" />
-                </button>
-              </div>
+              </button>
             ))}
+          </div>
+        )}
+        {tab === "people" && selectedPerson && (
+          <div className="space-y-4">
+            <button
+              onClick={() => setSelectedPerson(null)}
+              className="flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back
+            </button>
+            <div className="flex flex-col items-center text-center gap-2 pt-2">
+              <div className="h-20 w-20 rounded-full bg-neutral-200 flex items-center justify-center text-lg font-semibold text-neutral-700">
+                {selectedPerson.initials}
+              </div>
+              <div>
+                <div className="text-sm font-semibold">{selectedPerson.name}</div>
+                <div className="text-[11px] text-neutral-500">{selectedPerson.role}</div>
+                <div className="text-[10px] text-neutral-400 mt-0.5">Marketing Brain · Acme Co.</div>
+              </div>
+            </div>
+            <button className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-md bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-700">
+              <AtSign className="h-3.5 w-3.5" /> Tag in Canvas
+            </button>
+            <div className="space-y-1">
+              <p className="text-[11px] uppercase tracking-wider text-neutral-500 px-1">Details</p>
+              <DetailRow k="Role" v={selectedPerson.role} />
+              <DetailRow k="Status" v="Active" />
+              <DetailRow k="Timezone" v="PT" />
+            </div>
           </div>
         )}
         {tab === "tools" && (
@@ -270,9 +298,32 @@ function DetailRow({ k, v }: { k: string; v: string }) {
   );
 }
 
-function ChatListPanel() {
+function ChatListPanel({ onJumpToCanvas }: { onJumpToCanvas: () => void }) {
   return (
     <div className="p-3 space-y-4">
+      <div>
+        <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-1 px-1 flex items-center gap-1">
+          <Bell className="h-3 w-3" /> Notifications
+        </p>
+        <div className="rounded-md border border-neutral-200 p-3 space-y-2">
+          <div className="flex items-start gap-2">
+            <div className="h-7 w-7 shrink-0 rounded-full bg-neutral-800 text-white text-[10px] font-semibold flex items-center justify-center">JM</div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-neutral-800 leading-snug">
+                <span className="font-semibold">Jason M.</span> tagged you in{" "}
+                <span className="font-medium">Q3 Campaign Outline</span>.
+              </p>
+              <div className="text-[10px] text-neutral-500 mt-0.5">2m ago</div>
+            </div>
+          </div>
+          <button
+            onClick={onJumpToCanvas}
+            className="w-full px-3 py-1.5 rounded-md bg-neutral-900 text-white text-[11px] font-medium hover:bg-neutral-700"
+          >
+            View in Canvas
+          </button>
+        </div>
+      </div>
       <div>
         <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-1 px-1">Channels</p>
         {["#marketing", "#brand", "#campaigns", "#general"].map((c) => (
@@ -305,9 +356,9 @@ function LinkPanel() {
   );
 }
 
-function Metric({ n, label }: { n: string; label: string }) {
+function Metric({ n, label, interactive }: { n: string; label: string; interactive?: boolean }) {
   return (
-    <div className="rounded-md border border-neutral-200 p-3">
+    <div className={`rounded-md border border-neutral-200 p-3 ${interactive ? "hover:bg-neutral-50 transition-colors" : ""}`}>
       <div className="text-xl font-semibold">{n}</div>
       <div className="text-[11px] text-neutral-500">{label}</div>
     </div>
