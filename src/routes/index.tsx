@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect } from "react";
 import {
   Briefcase, MessageSquare, Link2, FileEdit, Calendar, LayoutGrid, User,
-  X, Send, Paperclip, Plus, MoreHorizontal,
+  X, Send, Paperclip, Plus, MoreHorizontal, ArrowLeft, AtSign, FileText, Copy, Share2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -142,13 +142,25 @@ function ContextColumn({
 
 function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void }) {
   const tabs: WorkTab[] = ["files", "people", "tools"];
+  const [selectedFile, setSelectedFile] = useState<null | { name: string; date: string }>(null);
+  const files = [
+    { name: "Brand_Guide.pdf", date: "Mar 12, 2026" },
+    { name: "Q4_Strategy.docx", date: "May 28, 2026" },
+    { name: "Audience_Research.xlsx", date: "May 30, 2026" },
+  ];
+  const people = [
+    { name: "Jason M.", role: "Head of Q3 Launch" },
+    { name: "Alex Reed", role: "Brand Lead" },
+    { name: "Jordan Kim", role: "Content Strategist" },
+    { name: "Sam Patel", role: "Performance Marketing" },
+  ];
   return (
     <div className="flex flex-col">
       <div className="flex gap-1 border-b border-neutral-200 px-2">
         {tabs.map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t)}
+            onClick={() => { setTab(t); setSelectedFile(null); }}
             className={`px-3 py-2 text-xs font-medium capitalize border-b-2 -mb-px transition-colors ${
               tab === t ? "border-neutral-900 text-neutral-900" : "border-transparent text-neutral-500 hover:text-neutral-800"
             }`}
@@ -156,7 +168,7 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
         ))}
       </div>
       <div className="p-3">
-        {tab === "files" && (
+        {tab === "files" && !selectedFile && (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <Metric n="12" label="Files" />
@@ -171,16 +183,69 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
               </div>
             </div>
             <div className="space-y-1">
-              {["Brand_Guide.pdf", "Q4_Strategy.docx", "Audience_Research.xlsx"].map((f) => (
-                <Row key={f} title={f} sub="Updated 2d ago" />
+              <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-1 px-1">Ingested Files</p>
+              {files.map((f) => (
+                <button
+                  key={f.name}
+                  onClick={() => setSelectedFile(f)}
+                  className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-neutral-50 text-left"
+                >
+                  <div className="h-7 w-7 shrink-0 rounded bg-neutral-200 flex items-center justify-center">
+                    <FileText className="h-3.5 w-3.5 text-neutral-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-medium truncate">{f.name}</div>
+                    <div className="text-[10px] text-neutral-500 truncate">Uploaded {f.date}</div>
+                  </div>
+                </button>
               ))}
+            </div>
+          </div>
+        )}
+        {tab === "files" && selectedFile && (
+          <div className="space-y-3">
+            <button
+              onClick={() => setSelectedFile(null)}
+              className="flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back
+            </button>
+            <div className="rounded-md border border-neutral-200 p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="h-10 w-10 rounded bg-neutral-200 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-neutral-600" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold truncate">{selectedFile.name}</div>
+                  <div className="text-[10px] text-neutral-500">Uploaded {selectedFile.date}</div>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[11px] uppercase tracking-wider text-neutral-500 px-1">Details</p>
+              <DetailRow k="Type" v={selectedFile.name.split(".").pop()?.toUpperCase() ?? ""} />
+              <DetailRow k="Uploaded" v={selectedFile.date} />
+              <DetailRow k="Owner" v="Jason M." />
+              <DetailRow k="Status" v="Indexed" />
             </div>
           </div>
         )}
         {tab === "people" && (
           <div className="space-y-1">
-            {["Alex Reed", "Jordan Kim", "Sam Patel", "Riley Chen"].map((p) => (
-              <Row key={p} title={p} sub="Marketing" avatar />
+            {people.map((p) => (
+              <div key={p.name} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-neutral-50">
+                <div className="h-8 w-8 shrink-0 rounded-full bg-neutral-200" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-medium truncate">{p.name}</div>
+                  <div className="text-[10px] text-neutral-500 truncate">{p.role}</div>
+                </div>
+                <button
+                  title="Tag into workflow"
+                  className="p-1.5 rounded-md border border-neutral-200 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <AtSign className="h-3.5 w-3.5" />
+                </button>
+              </div>
             ))}
           </div>
         )}
@@ -192,6 +257,15 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function DetailRow({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="flex items-center justify-between px-2 py-1.5 text-xs">
+      <span className="text-neutral-500">{k}</span>
+      <span className="text-neutral-900 font-medium">{v}</span>
     </div>
   );
 }
@@ -269,24 +343,25 @@ function Canvas({ active }: { active: RailKey }) {
         <div className="flex items-center gap-2">
           <div className="h-6 w-6 rounded-full bg-neutral-200" />
           <div>
-            <div className="text-xs font-semibold">Marketing Brain Assistant</div>
+            <div className="text-xs font-semibold">Execution Canvas</div>
             <div className="text-[10px] text-neutral-500 capitalize">{active} workspace</div>
           </div>
         </div>
         <button className="p-1 rounded hover:bg-neutral-100"><MoreHorizontal className="h-4 w-4" /></button>
       </header>
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
-        <Bubble who="ai">Hi 👋 I'm your Marketing Brain assistant. Ask anything about your projects, files, or campaigns.</Bubble>
-        <Bubble who="me">Summarize the brand guide highlights.</Bubble>
-        <Bubble who="ai">Here are the top brand pillars from your guide: tone, palette, typography, and voice examples…</Bubble>
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+        <div className="text-xs text-neutral-500">
+          Generated from <span className="font-medium text-neutral-800">Brand_Guide.pdf</span> + <span className="font-medium text-neutral-800">Q4_Strategy.docx</span>
+        </div>
+        <OutputBlock />
       </div>
 
       <div className="border-t border-neutral-200 p-3">
         <div className="mx-auto max-w-3xl flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 shadow-sm">
           <button className="p-1 text-neutral-500 hover:text-neutral-800"><Paperclip className="h-4 w-4" /></button>
           <input
-            placeholder="Type a message…"
+            placeholder="Describe an output to generate…"
             className="flex-1 bg-transparent outline-none text-sm placeholder:text-neutral-400"
           />
           <button className="p-1.5 rounded-md bg-neutral-900 text-white hover:bg-neutral-700"><Send className="h-4 w-4" /></button>
@@ -296,12 +371,60 @@ function Canvas({ active }: { active: RailKey }) {
   );
 }
 
-function Bubble({ who, children }: { who: "ai" | "me"; children: ReactNode }) {
+function OutputBlock() {
+  const collaborators = [
+    { initials: "JM", tone: "bg-neutral-800" },
+    { initials: "AR", tone: "bg-neutral-600" },
+    { initials: "JK", tone: "bg-neutral-400" },
+  ];
   return (
-    <div className={`flex ${who === "me" ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
-        who === "me" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-900"
-      }`}>{children}</div>
-    </div>
+    <article className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden max-w-3xl">
+      <header className="flex items-start justify-between gap-3 px-4 py-3 border-b border-neutral-200">
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-wider text-neutral-500">Output Block · Email Campaign</div>
+          <h3 className="text-sm font-semibold truncate">Q3 Email Campaign</h3>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <button className="p-1.5 rounded-md border border-neutral-200 hover:bg-neutral-50 text-neutral-600"><Copy className="h-3.5 w-3.5" /></button>
+          <button className="p-1.5 rounded-md border border-neutral-200 hover:bg-neutral-50 text-neutral-600"><Share2 className="h-3.5 w-3.5" /></button>
+          <button className="p-1.5 rounded-md border border-neutral-200 hover:bg-neutral-50 text-neutral-600"><MoreHorizontal className="h-3.5 w-3.5" /></button>
+        </div>
+      </header>
+      <div className="px-4 py-3 space-y-3 text-sm text-neutral-800">
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Subject Line</div>
+          <p className="font-medium">Your Q3 starts here — three moves to ship this quarter.</p>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Body Preview</div>
+          <p className="text-neutral-700 leading-relaxed">
+            Hi {"{first_name}"}, we lined up the Q3 launch around three pillars from your brand guide: tone,
+            audience, and proof. Here's the recommended cadence and the first send copy, ready to review.
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          <Metric n="3" label="Sends" />
+          <Metric n="12.4k" label="Audience" />
+          <Metric n="A/B" label="Variant" />
+        </div>
+      </div>
+      <footer className="flex items-center justify-between px-4 py-2.5 border-t border-neutral-200 bg-neutral-50">
+        <div className="flex items-center gap-2">
+          <div className="flex -space-x-2">
+            {collaborators.map((c) => (
+              <div
+                key={c.initials}
+                className={`h-6 w-6 rounded-full ring-2 ring-neutral-50 ${c.tone} text-white text-[9px] font-semibold flex items-center justify-center`}
+                title={c.initials}
+              >
+                {c.initials}
+              </div>
+            ))}
+          </div>
+          <span className="text-[10px] text-neutral-500">3 collaborators · edited 4m ago</span>
+        </div>
+        <button className="text-[11px] font-medium text-neutral-700 hover:text-neutral-900">Open</button>
+      </footer>
+    </article>
   );
 }
