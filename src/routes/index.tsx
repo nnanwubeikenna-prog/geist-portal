@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, type ReactNode } from "react";
 import {
   Briefcase, MessageSquare, Link2, FileEdit, Calendar, LayoutGrid, User,
-  X, Send, Paperclip, Plus, MoreHorizontal,
+  X, Send, Paperclip, Plus, MoreHorizontal, ArrowLeft, AtSign, FileText, Copy, Share2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
