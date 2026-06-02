@@ -142,13 +142,25 @@ function ContextColumn({
 
 function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void }) {
   const tabs: WorkTab[] = ["files", "people", "tools"];
+  const [selectedFile, setSelectedFile] = useState<null | { name: string; date: string }>(null);
+  const files = [
+    { name: "Brand_Guide.pdf", date: "Mar 12, 2026" },
+    { name: "Q4_Strategy.docx", date: "May 28, 2026" },
+    { name: "Audience_Research.xlsx", date: "May 30, 2026" },
+  ];
+  const people = [
+    { name: "Jason M.", role: "Head of Q3 Launch" },
+    { name: "Alex Reed", role: "Brand Lead" },
+    { name: "Jordan Kim", role: "Content Strategist" },
+    { name: "Sam Patel", role: "Performance Marketing" },
+  ];
   return (
     <div className="flex flex-col">
       <div className="flex gap-1 border-b border-neutral-200 px-2">
         {tabs.map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t)}
+            onClick={() => { setTab(t); setSelectedFile(null); }}
             className={`px-3 py-2 text-xs font-medium capitalize border-b-2 -mb-px transition-colors ${
               tab === t ? "border-neutral-900 text-neutral-900" : "border-transparent text-neutral-500 hover:text-neutral-800"
             }`}
@@ -156,7 +168,7 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
         ))}
       </div>
       <div className="p-3">
-        {tab === "files" && (
+        {tab === "files" && !selectedFile && (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <Metric n="12" label="Files" />
@@ -171,16 +183,69 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
               </div>
             </div>
             <div className="space-y-1">
-              {["Brand_Guide.pdf", "Q4_Strategy.docx", "Audience_Research.xlsx"].map((f) => (
-                <Row key={f} title={f} sub="Updated 2d ago" />
+              <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-1 px-1">Ingested Files</p>
+              {files.map((f) => (
+                <button
+                  key={f.name}
+                  onClick={() => setSelectedFile(f)}
+                  className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-neutral-50 text-left"
+                >
+                  <div className="h-7 w-7 shrink-0 rounded bg-neutral-200 flex items-center justify-center">
+                    <FileText className="h-3.5 w-3.5 text-neutral-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-medium truncate">{f.name}</div>
+                    <div className="text-[10px] text-neutral-500 truncate">Uploaded {f.date}</div>
+                  </div>
+                </button>
               ))}
+            </div>
+          </div>
+        )}
+        {tab === "files" && selectedFile && (
+          <div className="space-y-3">
+            <button
+              onClick={() => setSelectedFile(null)}
+              className="flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back
+            </button>
+            <div className="rounded-md border border-neutral-200 p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="h-10 w-10 rounded bg-neutral-200 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-neutral-600" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold truncate">{selectedFile.name}</div>
+                  <div className="text-[10px] text-neutral-500">Uploaded {selectedFile.date}</div>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[11px] uppercase tracking-wider text-neutral-500 px-1">Details</p>
+              <DetailRow k="Type" v={selectedFile.name.split(".").pop()?.toUpperCase() ?? ""} />
+              <DetailRow k="Uploaded" v={selectedFile.date} />
+              <DetailRow k="Owner" v="Jason M." />
+              <DetailRow k="Status" v="Indexed" />
             </div>
           </div>
         )}
         {tab === "people" && (
           <div className="space-y-1">
-            {["Alex Reed", "Jordan Kim", "Sam Patel", "Riley Chen"].map((p) => (
-              <Row key={p} title={p} sub="Marketing" avatar />
+            {people.map((p) => (
+              <div key={p.name} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-neutral-50">
+                <div className="h-8 w-8 shrink-0 rounded-full bg-neutral-200" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-medium truncate">{p.name}</div>
+                  <div className="text-[10px] text-neutral-500 truncate">{p.role}</div>
+                </div>
+                <button
+                  title="Tag into workflow"
+                  className="p-1.5 rounded-md border border-neutral-200 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <AtSign className="h-3.5 w-3.5" />
+                </button>
+              </div>
             ))}
           </div>
         )}
@@ -192,6 +257,15 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function DetailRow({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="flex items-center justify-between px-2 py-1.5 text-xs">
+      <span className="text-neutral-500">{k}</span>
+      <span className="text-neutral-900 font-medium">{v}</span>
     </div>
   );
 }
