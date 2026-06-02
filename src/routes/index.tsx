@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import {
   Briefcase, MessageSquare, Link2, FileEdit, Calendar, LayoutGrid, User,
   X, Send, Paperclip, Plus, MoreHorizontal, ArrowLeft, AtSign, FileText, Copy, Share2,
+  Upload, Trash2, Bell,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -38,10 +39,16 @@ function Index() {
   const [chatOpen, setChatOpen] = useState(false);
   const isMobile = useIsMobile();
 
+  const jumpToCanvas = () => {
+    setActive("work");
+    setWorkTab("files");
+    if (isMobile) setChatOpen(true);
+  };
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-neutral-50 text-neutral-900 grid grid-cols-[60px_1fr] md:grid-cols-[75px_320px_1fr]">
       <Rail active={active} onChange={setActive} />
-      <ContextColumn active={active} workTab={workTab} setWorkTab={setWorkTab} />
+      <ContextColumn active={active} workTab={workTab} setWorkTab={setWorkTab} onJumpToCanvas={jumpToCanvas} />
       <main className="hidden md:flex min-w-0 border-l border-neutral-200 bg-white">
         <Canvas active={active} />
       </main>
