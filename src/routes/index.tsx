@@ -126,8 +126,8 @@ function RailBtn({
 
 /* ---------------- Column 2: Context Directory ---------------- */
 function ContextColumn({
-  active, workTab, setWorkTab,
-}: { active: RailKey; workTab: WorkTab; setWorkTab: (t: WorkTab) => void }) {
+  active, workTab, setWorkTab, onJumpToCanvas,
+}: { active: RailKey; workTab: WorkTab; setWorkTab: (t: WorkTab) => void; onJumpToCanvas: () => void }) {
   return (
     <aside className="flex flex-col min-w-0 bg-white border-r border-neutral-200 overflow-hidden">
       <div className="h-12 flex items-center justify-between px-4 border-b border-neutral-200">
@@ -136,7 +136,7 @@ function ContextColumn({
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto">
         {active === "work" && <WorkPanel tab={workTab} setTab={setWorkTab} />}
-        {active === "chat" && <ChatListPanel />}
+        {active === "chat" && <ChatListPanel onJumpToCanvas={onJumpToCanvas} />}
         {active === "link" && <LinkPanel />}
         {active === "drafts" && <SimpleList title="Drafts" items={["Q4 Campaign Brief", "Product Launch Memo", "Newsletter Draft"]} />}
         {active === "calendar" && <SimpleList title="Upcoming" items={["Standup — 9:00", "Brand Review — 11:30", "1:1 with Alex — 14:00"]} />}
