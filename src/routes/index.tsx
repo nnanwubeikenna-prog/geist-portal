@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import {
   Briefcase, MessageSquare, Link2, FileEdit, Calendar, LayoutGrid, User,
   X, Send, Paperclip, Plus, MoreHorizontal, ArrowLeft, AtSign, FileText, Copy, Share2,
@@ -385,7 +385,7 @@ function ChatListPanel({ onJumpToCanvas }: { onJumpToCanvas: () => void }) {
   );
 }
 
-function DMBubble({ initials, children }: { initials: string; children: React.ReactNode }) {
+function DMBubble({ initials, children }: { initials: string; children: ReactNode }) {
   return (
     <div className="flex gap-2">
       <div className="h-7 w-7 shrink-0 rounded-full bg-neutral-800 text-white text-[10px] font-semibold flex items-center justify-center">
