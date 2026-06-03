@@ -3,7 +3,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import {
   Briefcase, MessageSquare, Link2, FileEdit, Calendar, LayoutGrid, User,
   X, Send, Paperclip, Plus, MoreHorizontal, ArrowLeft, AtSign, FileText, Copy, Share2,
-  Upload, Trash2,
+  Upload, Trash2, CheckCircle2, Loader2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -278,11 +278,7 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
           </div>
         )}
         {tab === "tools" && (
-          <div className="space-y-1">
-            {["Notion", "Google Drive", "Slack", "Figma", "HubSpot"].map((t) => (
-              <Row key={t} title={t} sub="Connected" />
-            ))}
-          </div>
+          <AppGrid layout="list" />
         )}
       </div>
     </div>
@@ -444,14 +440,117 @@ function DMBubble({ initials, children }: { initials: string; children: ReactNod
 }
 
 function LinkPanel() {
-  const apps = ["Notion", "Drive", "Docs", "Sheets", "Slack", "Gmail", "Zoom", "Figma"];
+  return <AppGrid layout="grid" />;
+}
+
+type AppItem = {
+  name: string;
+  description: string;
+  connected: boolean;
+};
+
+const INITIAL_APPS: AppItem[] = [
+  { name: "Notion", description: "Sync pages, databases, and docs into your workspace memory.", connected: true },
+  { name: "Drive", description: "Ingest Google Drive files and folders for retrieval.", connected: false },
+  { name: "Docs", description: "Read and draft directly in Google Docs.", connected: false },
+  { name: "Sheets", description: "Pull structured data from Google Sheets.", connected: false },
+  { name: "Slack", description: "Surface threads and post agent outputs to channels.", connected: true },
+  { name: "Gmail", description: "Reference threads and draft outbound replies.", connected: false },
+  { name: "Zoom", description: "Import meeting transcripts as context.", connected: false },
+  { name: "Figma", description: "Reference frames and design tokens in generations.", connected: false },
+];
+
+function AppGrid({ layout }: { layout: "grid" | "list" }) {
+  const [apps, setApps] = useState<AppItem[]>(INITIAL_APPS);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  if (selected) {
+    const app = apps.find((a) => a.name === selected)!;
+    const toggle = () =>
+      setApps((prev) => prev.map((a) => (a.name === app.name ? { ...a, connected: !a.connected } : a)));
+    return (
+      <div className="p-3 space-y-4">
+        <button
+          onClick={() => setSelected(null)}
+          className="flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back
+        </button>
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-md bg-neutral-200 flex items-center justify-center text-sm font-semibold text-neutral-700">
+            {app.name.slice(0, 2)}
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold">{app.name}</div>
+            <div className="text-[10px] text-neutral-500">Nango OAuth integration</div>
+          </div>
+        </div>
+        <p className="text-xs text-neutral-600 leading-relaxed">{app.description}</p>
+        {app.connected ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-green-50 border border-green-200 text-green-700 text-xs font-medium w-fit">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Connected
+            </div>
+            <button
+              onClick={toggle}
+              className="text-[11px] text-neutral-500 hover:text-neutral-900 underline underline-offset-2"
+            >
+              Disconnect
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={toggle}
+            className="w-full px-3 py-2.5 rounded-md bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-700"
+          >
+            Connect Account
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  if (layout === "list") {
+    return (
+      <div className="p-1 space-y-0.5">
+        {apps.map((a) => (
+          <button
+            key={a.name}
+            onClick={() => setSelected(a.name)}
+            className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-neutral-50 text-left"
+          >
+            <div className="h-7 w-7 shrink-0 rounded bg-neutral-200 flex items-center justify-center text-[10px] font-semibold text-neutral-700">
+              {a.name.slice(0, 2)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-medium truncate">{a.name}</div>
+              <div className="text-[10px] text-neutral-500 truncate">
+                {a.connected ? "Connected" : "Not connected"}
+              </div>
+            </div>
+            {a.connected && <span className="h-1.5 w-1.5 rounded-full bg-green-500" />}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="p-3">
       <div className="grid grid-cols-3 gap-2">
         {apps.map((a) => (
-          <button key={a} className="aspect-square rounded-md border border-neutral-200 hover:bg-neutral-50 flex flex-col items-center justify-center gap-1">
-            <div className="h-7 w-7 rounded bg-neutral-200" />
-            <span className="text-[10px] text-neutral-700">{a}</span>
+          <button
+            key={a.name}
+            onClick={() => setSelected(a.name)}
+            className="relative aspect-square rounded-md border border-neutral-200 hover:bg-neutral-50 flex flex-col items-center justify-center gap-1"
+          >
+            {a.connected && (
+              <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-green-500" />
+            )}
+            <div className="h-7 w-7 rounded bg-neutral-200 flex items-center justify-center text-[10px] font-semibold text-neutral-700">
+              {a.name.slice(0, 2)}
+            </div>
+            <span className="text-[10px] text-neutral-700">{a.name}</span>
           </button>
         ))}
       </div>
@@ -493,6 +592,7 @@ function SimpleList({ title, items }: { title: string; items: string[] }) {
 function Canvas({ active }: { active: RailKey }) {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState("");
+  const [isProcessing, setIsProcessing] = useState(true);
   const send = () => {
     const t = input.trim();
     if (!t) return;
@@ -527,6 +627,26 @@ function Canvas({ active }: { active: RailKey }) {
       </div>
 
       <div className="border-t border-neutral-200 p-3">
+        {isProcessing && (
+          <div className="mx-auto max-w-3xl mb-2 flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+            <Loader2 className="h-3.5 w-3.5 text-neutral-500 animate-spin" />
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-medium text-neutral-800">
+                Agent syncing workspace data
+                <span className="inline-block animate-pulse">…</span>
+              </div>
+              <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-neutral-200">
+                <div className="h-full w-1/3 animate-pulse rounded-full bg-neutral-400" />
+              </div>
+            </div>
+            <button
+              onClick={() => setIsProcessing(false)}
+              className="text-[10px] text-neutral-500 hover:text-neutral-900"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
         <div className="mx-auto max-w-3xl flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 shadow-sm">
           <button className="p-1 text-neutral-500 hover:text-neutral-800"><Paperclip className="h-4 w-4" /></button>
           <input
