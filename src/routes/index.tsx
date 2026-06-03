@@ -53,7 +53,7 @@ function Index() {
         <Canvas active={active} />
       </main>
 
-      {isMobile && !chatOpen && (
+      {isMobile && !chatOpen && active === "work" && (
         <button
           onClick={() => setChatOpen(true)}
           className="fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full bg-neutral-900 text-white shadow-lg flex items-center justify-center hover:bg-neutral-700"
