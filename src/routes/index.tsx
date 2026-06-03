@@ -491,6 +491,14 @@ function SimpleList({ title, items }: { title: string; items: string[] }) {
 
 /* ---------------- Column 3: Canvas ---------------- */
 function Canvas({ active }: { active: RailKey }) {
+  const [messages, setMessages] = useState<string[]>([]);
+  const [input, setInput] = useState("");
+  const send = () => {
+    const t = input.trim();
+    if (!t) return;
+    setMessages((prev) => [...prev, t]);
+    setInput("");
+  };
   return (
     <section className="flex flex-col flex-1 min-w-0 h-full">
       <header className="h-12 flex items-center justify-between px-4 border-b border-neutral-200">
@@ -509,16 +517,36 @@ function Canvas({ active }: { active: RailKey }) {
           Generated from <span className="font-medium text-neutral-800">Brand_Guide.pdf</span> + <span className="font-medium text-neutral-800">Q4_Strategy.docx</span>
         </div>
         <OutputBlock />
+        {messages.map((m, i) => (
+          <div key={i} className="max-w-3xl flex justify-end">
+            <div className="rounded-md bg-neutral-900 text-white px-3 py-2 text-sm max-w-[85%] leading-snug">
+              {m}
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="border-t border-neutral-200 p-3">
         <div className="mx-auto max-w-3xl flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 shadow-sm">
           <button className="p-1 text-neutral-500 hover:text-neutral-800"><Paperclip className="h-4 w-4" /></button>
           <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                send();
+              }
+            }}
             placeholder="Describe an output to generate…"
             className="flex-1 bg-transparent outline-none text-sm placeholder:text-neutral-400"
           />
-          <button className="p-1.5 rounded-md bg-neutral-900 text-white hover:bg-neutral-700"><Send className="h-4 w-4" /></button>
+          <button
+            onClick={send}
+            className="px-2.5 py-1.5 rounded-md bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-700 flex items-center gap-1"
+          >
+            <Send className="h-3.5 w-3.5" /> Send
+          </button>
         </div>
       </div>
     </section>
