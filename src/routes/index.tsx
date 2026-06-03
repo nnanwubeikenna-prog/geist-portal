@@ -592,6 +592,7 @@ function SimpleList({ title, items }: { title: string; items: string[] }) {
 function Canvas({ active }: { active: RailKey }) {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState("");
+  const [isProcessing, setIsProcessing] = useState(true);
   const send = () => {
     const t = input.trim();
     if (!t) return;
@@ -626,6 +627,26 @@ function Canvas({ active }: { active: RailKey }) {
       </div>
 
       <div className="border-t border-neutral-200 p-3">
+        {isProcessing && (
+          <div className="mx-auto max-w-3xl mb-2 flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+            <Loader2 className="h-3.5 w-3.5 text-neutral-500 animate-spin" />
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-medium text-neutral-800">
+                Agent syncing workspace data
+                <span className="inline-block animate-pulse">…</span>
+              </div>
+              <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-neutral-200">
+                <div className="h-full w-1/3 animate-pulse rounded-full bg-neutral-400" />
+              </div>
+            </div>
+            <button
+              onClick={() => setIsProcessing(false)}
+              className="text-[10px] text-neutral-500 hover:text-neutral-900"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
         <div className="mx-auto max-w-3xl flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 shadow-sm">
           <button className="p-1 text-neutral-500 hover:text-neutral-800"><Paperclip className="h-4 w-4" /></button>
           <input
