@@ -4,6 +4,7 @@ import {
   Briefcase, MessageSquare, Link2, FileEdit, Calendar, LayoutGrid, User,
   X, Send, Paperclip, Plus, MoreHorizontal, ArrowLeft, AtSign, FileText, Copy, Share2,
   Upload, Trash2, CheckCircle2, Loader2,
+  RefreshCw, Download,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -617,6 +618,7 @@ function Canvas({ active }: { active: RailKey }) {
           Generated from <span className="font-medium text-neutral-800">Brand_Guide.pdf</span> + <span className="font-medium text-neutral-800">Q4_Strategy.docx</span>
         </div>
         <OutputBlock />
+        <GeneratedAssetBlock />
         {messages.map((m, i) => (
           <div key={i} className="max-w-3xl flex justify-end">
             <div className="rounded-md bg-neutral-900 text-white px-3 py-2 text-sm max-w-[85%] leading-snug">
@@ -679,6 +681,51 @@ function OutputBlock() {
     { initials: "AR", tone: "bg-neutral-600" },
     { initials: "JK", tone: "bg-neutral-400" },
   ];
+  return _OutputBlockImpl(collaborators);
+}
+
+function GeneratedAssetBlock() {
+  return (
+    <article className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden max-w-3xl">
+      <header className="flex items-start justify-between gap-3 px-4 py-3 border-b border-neutral-200">
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-wider text-neutral-500">Output Block · Native Asset</div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold truncate">Generated Asset Document</h3>
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-neutral-200 bg-neutral-50 text-neutral-600">
+              v1.0 Native
+            </span>
+          </div>
+        </div>
+        <button className="p-1.5 rounded-md border border-neutral-200 hover:bg-neutral-50 text-neutral-600">
+          <MoreHorizontal className="h-3.5 w-3.5" />
+        </button>
+      </header>
+      <div className="px-4 py-3">
+        <div className="grid grid-cols-2 gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="aspect-square rounded-lg bg-neutral-100 border border-neutral-200 flex items-center justify-center"
+            >
+              <FileText className="h-6 w-6 text-neutral-400" />
+            </div>
+          ))}
+        </div>
+      </div>
+      <footer className="flex items-center justify-end gap-2 px-4 py-3 border-t border-neutral-200 bg-neutral-50/50">
+        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-neutral-200 bg-white text-xs font-medium text-neutral-700 hover:bg-neutral-50">
+          <RefreshCw className="h-3.5 w-3.5" /> Regenerate
+        </button>
+        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-700">
+          <Download className="h-3.5 w-3.5" /> Export / Download
+        </button>
+      </footer>
+    </article>
+  );
+}
+
+function _OutputBlockImpl(collaborators: { initials: string; tone: string }[]) {
   return (
     <article className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden max-w-3xl">
       <header className="flex items-start justify-between gap-3 px-4 py-3 border-b border-neutral-200">
