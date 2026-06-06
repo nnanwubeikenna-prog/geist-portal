@@ -4,6 +4,7 @@ import {
   Briefcase, MessageSquare, Link2, FileEdit, Calendar, LayoutGrid, User,
   X, Send, Paperclip, Plus, MoreHorizontal, ArrowLeft, AtSign, FileText, Copy, Share2,
   Upload, Trash2, CheckCircle2, Loader2,
+  RefreshCw, Download,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
