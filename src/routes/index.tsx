@@ -618,6 +618,7 @@ function Canvas({ active }: { active: RailKey }) {
           Generated from <span className="font-medium text-neutral-800">Brand_Guide.pdf</span> + <span className="font-medium text-neutral-800">Q4_Strategy.docx</span>
         </div>
         <OutputBlock />
+        <GeneratedAssetBlock />
         {messages.map((m, i) => (
           <div key={i} className="max-w-3xl flex justify-end">
             <div className="rounded-md bg-neutral-900 text-white px-3 py-2 text-sm max-w-[85%] leading-snug">
