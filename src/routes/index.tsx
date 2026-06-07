@@ -590,6 +590,43 @@ function SimpleList({ title, items }: { title: string; items: string[] }) {
   );
 }
 
+function ProfilePanel() {
+  const navigate = useNavigate();
+  const signOut = () => navigate({ to: "/auth" });
+  return (
+    <div className="p-3 space-y-4">
+      <div className="flex flex-col items-center text-center gap-2 pt-2">
+        <div className="h-20 w-20 rounded-full bg-neutral-900 text-white flex items-center justify-center text-lg font-semibold">
+          MN
+        </div>
+        <div>
+          <div className="text-sm font-semibold">Mock Name</div>
+          <div className="text-[11px] text-neutral-500">mock.name@acme.co</div>
+          <div className="text-[10px] text-neutral-400 mt-0.5">Marketing Brain · Acme Co.</div>
+        </div>
+      </div>
+      <div className="space-y-1">
+        <p className="text-[11px] uppercase tracking-wider text-neutral-500 px-1">Account</p>
+        <DetailRow k="Plan" v="Workspace" />
+        <DetailRow k="Role" v="Admin" />
+        <DetailRow k="Timezone" v="PT" />
+      </div>
+      <div className="space-y-1">
+        <p className="text-[11px] uppercase tracking-wider text-neutral-500 px-1">Settings</p>
+        <Row title="Preferences" />
+        <Row title="Notifications" />
+        <Row title="Billing" />
+      </div>
+      <button
+        onClick={signOut}
+        className="w-full px-3 py-2.5 rounded-md border border-neutral-200 bg-white text-xs font-medium text-neutral-900 hover:bg-neutral-50"
+      >
+        Sign out
+      </button>
+    </div>
+  );
+}
+
 /* ---------------- Column 3: Canvas ---------------- */
 function Canvas({ active }: { active: RailKey }) {
   const [messages, setMessages] = useState<string[]>([]);
