@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, type ReactNode } from "react";
 import {
   Briefcase, MessageSquare, Link2, FileEdit, Calendar, LayoutGrid, User,
@@ -142,7 +142,7 @@ function ContextColumn({
         {active === "drafts" && <SimpleList title="Drafts" items={["Q4 Campaign Brief", "Product Launch Memo", "Newsletter Draft"]} />}
         {active === "calendar" && <SimpleList title="Upcoming" items={["Standup — 9:00", "Brand Review — 11:30", "1:1 with Alex — 14:00"]} />}
         {active === "apps" && <LinkPanel />}
-        {active === "profile" && <SimpleList title="Account" items={["Profile", "Preferences", "Notifications", "Sign out"]} />}
+        {active === "profile" && <ProfilePanel />}
       </div>
     </aside>
   );
@@ -452,6 +452,7 @@ type AppItem = {
 
 const INITIAL_APPS: AppItem[] = [
   { name: "Notion", description: "Sync pages, databases, and docs into your workspace memory.", connected: true },
+  { name: "Trello", description: "Sync boards, lists, and cards into your workspace memory.", connected: false },
   { name: "Drive", description: "Ingest Google Drive files and folders for retrieval.", connected: false },
   { name: "Docs", description: "Read and draft directly in Google Docs.", connected: false },
   { name: "Sheets", description: "Pull structured data from Google Sheets.", connected: false },
