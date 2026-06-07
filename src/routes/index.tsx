@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, type ReactNode } from "react";
 import {
   Briefcase, MessageSquare, Link2, FileEdit, Calendar, LayoutGrid, User,
@@ -142,7 +142,7 @@ function ContextColumn({
         {active === "drafts" && <SimpleList title="Drafts" items={["Q4 Campaign Brief", "Product Launch Memo", "Newsletter Draft"]} />}
         {active === "calendar" && <SimpleList title="Upcoming" items={["Standup — 9:00", "Brand Review — 11:30", "1:1 with Alex — 14:00"]} />}
         {active === "apps" && <LinkPanel />}
-        {active === "profile" && <SimpleList title="Account" items={["Profile", "Preferences", "Notifications", "Sign out"]} />}
+        {active === "profile" && <ProfilePanel />}
       </div>
     </aside>
   );
@@ -452,6 +452,7 @@ type AppItem = {
 
 const INITIAL_APPS: AppItem[] = [
   { name: "Notion", description: "Sync pages, databases, and docs into your workspace memory.", connected: true },
+  { name: "Trello", description: "Sync boards, lists, and cards into your workspace memory.", connected: false },
   { name: "Drive", description: "Ingest Google Drive files and folders for retrieval.", connected: false },
   { name: "Docs", description: "Read and draft directly in Google Docs.", connected: false },
   { name: "Sheets", description: "Pull structured data from Google Sheets.", connected: false },
@@ -585,6 +586,43 @@ function SimpleList({ title, items }: { title: string; items: string[] }) {
     <div className="p-3">
       <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-2">{title}</p>
       {items.map((i) => <Row key={i} title={i} />)}
+    </div>
+  );
+}
+
+function ProfilePanel() {
+  const navigate = useNavigate();
+  const signOut = () => navigate({ to: "/auth" });
+  return (
+    <div className="p-3 space-y-4">
+      <div className="flex flex-col items-center text-center gap-2 pt-2">
+        <div className="h-20 w-20 rounded-full bg-neutral-900 text-white flex items-center justify-center text-lg font-semibold">
+          MN
+        </div>
+        <div>
+          <div className="text-sm font-semibold">Mock Name</div>
+          <div className="text-[11px] text-neutral-500">mock.name@acme.co</div>
+          <div className="text-[10px] text-neutral-400 mt-0.5">Marketing Brain · Acme Co.</div>
+        </div>
+      </div>
+      <div className="space-y-1">
+        <p className="text-[11px] uppercase tracking-wider text-neutral-500 px-1">Account</p>
+        <DetailRow k="Plan" v="Workspace" />
+        <DetailRow k="Role" v="Admin" />
+        <DetailRow k="Timezone" v="PT" />
+      </div>
+      <div className="space-y-1">
+        <p className="text-[11px] uppercase tracking-wider text-neutral-500 px-1">Settings</p>
+        <Row title="Preferences" />
+        <Row title="Notifications" />
+        <Row title="Billing" />
+      </div>
+      <button
+        onClick={signOut}
+        className="w-full px-3 py-2.5 rounded-md border border-neutral-200 bg-white text-xs font-medium text-neutral-900 hover:bg-neutral-50"
+      >
+        Sign out
+      </button>
     </div>
   );
 }
