@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+langgraph
+langchain
+langchain-google-genai
+graphiti-core
+neo4j
+supabase
+python-dotenv
+litellm
+mcp
+httpx
+pydantic

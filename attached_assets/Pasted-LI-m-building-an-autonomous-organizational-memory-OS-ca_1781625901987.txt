@@ -1,0 +1,123 @@
+LI'm building an autonomous organizational memory OS called Company Brain. This is not a chatbot. It is a system that sits between users and any LLM, continuously ingests data from company tools like Notion and Trello, builds a temporal knowledge graph where facts are never deleted but marked as current or historical, injects relevant memory into every LLM conversation automatically, generates executable skill files from patterns it learns, and exposes everything via MCP so any agent including Claude Code can connect directly.
+
+Build the entire backend only. Do not touch anything in the src folder.
+
+Create this exact folder structure:
+```
+api/
+  __init__.py
+  main.py
+  memory/
+    __init__.py
+    engine.py
+  agents/
+    __init__.py
+    ingestion_agent.py
+    proxy_agent.py
+    skill_agent.py
+  tools/
+    __init__.py
+    nango.py
+  routes/
+    __init__.py
+    chat.py
+    connect.py
+    memory.py
+    skills.py
+  mcp/
+    __init__.py
+    server.py
+requirements.txt
+.env.example
+```
+
+Important rules you must follow:
+- Never use dotenv or load_dotenv anywhere. All environment variables must use os.environ.get() directly because secrets come from Replit secrets not a .env file
+- Never delete facts from Graphiti. Only mark is_current as False when something changes
+- Every function must be async with proper try/except error handling
+- Do not touch src folder under any circumstances
+
+Here is exactly what each file must do:
+
+requirements.txt:
+fastapi, uvicorn, langgraph, langchain, langchain-google-genai, graphiti-core, neo4j, supabase, python-dotenv, litellm, mcp, httpx, pydantic
+
+api/memory/engine.py:
+Initialize Graphiti using os.environ.get() for NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, GEMINI_API_KEY. Build these async functions:
+
+store_memory(content, source, user_id, is_skill=False): Stores fact in Graphiti with content, source, user_id, timestamp, is_current True, is_skill flag. Before storing check if similar fact exists for this user. If yes mark old fact is_current False then store new fact. Never delete old facts.
+
+fetch_memory(query, user_id, limit=5): Searches Graphiti for facts relevant to query for this user. Returns top 5 most relevant current facts as list of strings.
+
+fetch_all_memory(user_id): Returns all facts for a user including historical ones grouped by source.
+
+fetch_skills(user_id): Returns all facts where is_skill is True for this user.
+
+semantic_search(query, user_id, limit=5): Searches memory by meaning not exact words. Returns most semantically relevant facts even if different words are used.
+
+api/tools/nango.py:
+Use os.environ.get() for NANGO_SECRET_KEY. Base URL https://api.nango.dev. Build these async functions:
+
+fetch_notion_pages(user_id, connection_id): Calls Nango API to fetch all Notion pages. Returns list of dictionaries with title and content.
+
+fetch_trello_cards(user_id, connection_id): Calls Nango API to fetch all Trello cards. Returns list of dictionaries with name and description.
+
+api/agents/ingestion_agent.py:
+LangGraph agent with state: user_id, connection_id, tool, raw_data, extracted_facts, status.
+
+Nodes:
+fetch_data: Based on tool parameter calls correct Nango function. Stores result in raw_data.
+extract_facts: For each item in raw_data calls Gemini to extract important facts, decisions, knowledge. Prompt: Extract all important facts decisions and knowledge from this content. Each fact must be a single clear statement. Return as numbered list.
+store_facts: For each extracted fact calls store_memory with source as tool name and is_skill False.
+
+Connect: fetch_data → extract_facts → store_facts
+
+api/agents/proxy_agent.py:
+This is the most critical agent. LangGraph agent with state: user_id, message, model, api_key, memory_context, enriched_prompt, llm_response, new_facts.
+
+Nodes:
+enrich_message: Calls fetch_memory and fetch_skills for this user. Builds enriched prompt as: COMPANY MEMORY CONTEXT: [relevant facts] AVAILABLE SKILLS: [user skills] USER MESSAGE: [original message] Use this context to give a response aligned with this company knowledge history and way of doing things.
+
+route_to_llm: Uses LiteLLM to send enriched prompt to correct model. Supports gemini/gemini-2.0-flash using GEMINI_API_KEY, anthropic/claude-3-haiku using user provided api_key, openai/gpt-4o-mini using user provided api_key.
+
+update_memory: Takes original message and LLM response. Calls Gemini to extract new facts learned. Calls store_memory for each new fact.
+
+Connect: enrich_message → route_to_llm → update_memory
+
+api/agents/skill_agent.py:
+LangGraph agent with state: user_id, all_memories, skill_groups, generated_skills.
+
+Nodes:
+scan_memory: Calls fetch_all_memory. Groups facts by topic using Gemini.
+extract_skills: For each topic group calls Gemini: Based on these facts about how this company operates write an executable skill instruction with SKILL NAME, DESCRIPTION, TRIGGER CONDITIONS, STEP BY STEP instructions, EXPECTED OUTPUT.
+store_skills: Stores each skill with is_skill True. Saves each skill as markdown file in api/skills/ folder.
+
+Connect: scan_memory → extract_skills → store_skills
+
+api/routes/chat.py:
+POST /api/chat. Receives user_id, message, model, api_key. Calls proxy_agent. Returns response text, memory context used, model used.
+
+api/routes/connect.py:
+POST /api/connect. Receives user_id, tool, connection_id. Calls ingestion_agent. Returns confirmation and number of facts stored.
+
+api/routes/memory.py:
+GET /api/memory. Receives user_id and query. Calls fetch_memory. Returns relevant memories with source and timestamp.
+GET /api/memory/all. Receives user_id. Returns all memories grouped by source.
+GET /api/memory/search. Receives user_id and query. Calls semantic_search. Returns semantically relevant memories.
+
+api/routes/skills.py:
+GET /api/skills. Receives user_id. Returns all skills.
+POST /api/skills/generate. Receives user_id. Forces skill generation. Returns newly generated skill files.
+
+api/mcp/server.py:
+MCP server exposing four tools:
+get_memory: Takes query and user_id. Calls fetch_memory. Returns memories as formatted text.
+get_skills: Takes user_id. Calls fetch_skills. Returns all skills as formatted text.
+store_knowledge: Takes content, source, user_id. Calls store_memory. Confirms storage.
+ingest_tool: Takes user_id, tool, connection_id. Calls ingestion_agent. Returns confirmation.
+
+api/main.py:
+FastAPI app titled Company Brain. Add CORS middleware allowing all origins. Load all environment variables using os.environ.get() never dotenv. Include all routers with /api prefix. Add GET /api/health endpoint that returns status ok and confirms neo4j, nango, gemini, supabase are all connected. Start uvicorn on port 8000.
+
+After building everything:
+Run the backend. Test GET /api/health and confirm all services show as configured. Test POST /api/chat with user_id test_user, message: What do you know about our company, model: gemini/gemini-2.0-flash. Fix everything until both tests pass. 
