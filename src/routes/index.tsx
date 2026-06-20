@@ -152,17 +152,8 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
   const tabs: WorkTab[] = ["files", "people", "tools"];
   const [fileView, setFileView] = useState<"dashboard" | "manager">("dashboard");
   const [selectedPerson, setSelectedPerson] = useState<null | { name: string; role: string; initials: string }>(null);
-  const [files, setFiles] = useState([
-    { name: "Brand_Guide.pdf", date: "Mar 12, 2026" },
-    { name: "Q4_Strategy.docx", date: "May 28, 2026" },
-    { name: "Audience_Research.xlsx", date: "May 30, 2026" },
-  ]);
-  const people = [
-    { name: "Jason M.", role: "Head of Q3 Launch", initials: "JM" },
-    { name: "Alex Reed", role: "Brand Lead", initials: "AR" },
-    { name: "Jordan Kim", role: "Content Strategist", initials: "JK" },
-    { name: "Sam Patel", role: "Performance Marketing", initials: "SP" },
-  ];
+  const [files, setFiles] = useState<{ name: string; date: string }[]>([]);
+  const people: { name: string; role: string; initials: string }[] = [];
   return (
     <div className="flex flex-col">
       <div className="flex gap-1 border-b border-neutral-200 px-2">
@@ -181,18 +172,13 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => setFileView("manager")} className="text-left">
-                <Metric n="12" label="Files" interactive />
+                <Metric n={String(files.length)} label="Files" interactive />
               </button>
-              <Metric n="4" label="Sources" />
+              <Metric n="0" label="Sources" />
             </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-2">Suggested Actions</p>
-              <div className="flex flex-col gap-1.5">
-                {["Summarize brand guide", "Draft a launch email", "Generate campaign ideas"].map((s) => (
-                  <button key={s} className="text-left text-xs px-3 py-2 rounded-md border border-neutral-200 hover:bg-neutral-50">{s}</button>
-                ))}
-              </div>
-            </div>
+            {files.length === 0 && (
+              <p className="text-xs text-neutral-500 text-center py-4">No files yet. Upload your first file.</p>
+            )}
           </div>
         )}
         {tab === "files" && fileView === "manager" && (
@@ -211,6 +197,9 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
               <Upload className="h-3.5 w-3.5" /> Upload New File
             </button>
             <div className="space-y-1">
+              {files.length === 0 && (
+                <p className="text-xs text-neutral-500 text-center py-6">No files yet. Upload your first file.</p>
+              )}
               {files.map((f) => (
                 <div key={f.name} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-neutral-50">
                   <div className="h-7 w-7 shrink-0 rounded bg-neutral-200 flex items-center justify-center">
@@ -234,6 +223,9 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
         )}
         {tab === "people" && !selectedPerson && (
           <div className="space-y-1">
+            {people.length === 0 && (
+              <p className="text-xs text-neutral-500 text-center py-6">No team members yet.</p>
+            )}
             {people.map((p) => (
               <button
                 key={p.name}
