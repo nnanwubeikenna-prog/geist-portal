@@ -170,7 +170,7 @@ function ConnectToolPage() {
                   Go to Home
                 </button>
                 <button
-                  onClick={() => navigate({ to: "/", search: { panel: "link" } as never })}
+                  onClick={() => navigate({ to: "/" })}
                   className="w-full px-3 py-2.5 rounded-md border border-neutral-200 bg-white text-sm font-medium hover:bg-neutral-50"
                 >
                   Connect Another Tool
