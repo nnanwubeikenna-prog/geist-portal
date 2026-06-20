@@ -139,8 +139,8 @@ function ContextColumn({
         {active === "work" && <WorkPanel tab={workTab} setTab={setWorkTab} />}
         {active === "chat" && <ChatListPanel onJumpToCanvas={onJumpToCanvas} />}
         {active === "link" && <LinkPanel />}
-        {active === "drafts" && <SimpleList title="Drafts" items={["Q4 Campaign Brief", "Product Launch Memo", "Newsletter Draft"]} />}
-        {active === "calendar" && <SimpleList title="Upcoming" items={["Standup — 9:00", "Brand Review — 11:30", "1:1 with Alex — 14:00"]} />}
+        {active === "drafts" && <SimpleList title="Drafts" items={[]} emptyMessage="No drafts yet." />}
+        {active === "calendar" && <SimpleList title="Upcoming" items={[]} emptyMessage="No upcoming events." />}
         {active === "apps" && <LinkPanel />}
         {active === "profile" && <ProfilePanel />}
       </div>
@@ -438,11 +438,15 @@ function Row({ title, sub, avatar }: { title: string; sub?: string; avatar?: boo
   );
 }
 
-function SimpleList({ title, items }: { title: string; items: string[] }) {
+function SimpleList({ title, items, emptyMessage }: { title: string; items: string[]; emptyMessage?: string }) {
   return (
     <div className="p-3">
       <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-2">{title}</p>
-      {items.map((i) => <Row key={i} title={i} />)}
+      {items.length === 0 && emptyMessage ? (
+        <p className="text-xs text-neutral-500 text-center py-4">{emptyMessage}</p>
+      ) : (
+        items.map((i) => <Row key={i} title={i} />)
+      )}
     </div>
   );
 }
