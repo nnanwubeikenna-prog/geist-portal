@@ -289,111 +289,21 @@ function DetailRow({ k, v }: { k: string; v: string }) {
 
 function ChatListPanel({ onJumpToCanvas }: { onJumpToCanvas: () => void }) {
   const [openDM, setOpenDM] = useState<string | null>(null);
-  const [dmMessages, setDmMessages] = useState<Record<string, { from: "me" | "them"; text: string }[]>>({});
-  const [dmInput, setDmInput] = useState("");
-  const dms = [
-    { name: "Jason M.", initials: "JM", unread: 1 },
-    { name: "Alex Reed", initials: "AR", unread: 0 },
-    { name: "Jordan Kim", initials: "JK", unread: 0 },
-    { name: "Sam Patel", initials: "SP", unread: 0 },
-  ];
-
-  if (openDM) {
-    const person = dms.find((d) => d.name === openDM)!;
-    const myMsgs = dmMessages[openDM] ?? [];
-    const sendDM = () => {
-      const t = dmInput.trim();
-      if (!t) return;
-      setDmMessages((prev) => ({
-        ...prev,
-        [openDM]: [...(prev[openDM] ?? []), { from: "me", text: t }],
-      }));
-      setDmInput("");
-    };
-    return (
-      <div className="flex flex-col h-full">
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-neutral-200">
-          <button
-            onClick={() => setOpenDM(null)}
-            className="flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back
-          </button>
-          <div className="ml-2 flex items-center gap-2 min-w-0">
-            <div className="h-6 w-6 rounded-full bg-neutral-800 text-white text-[9px] font-semibold flex items-center justify-center">
-              {person.initials}
-            </div>
-            <span className="text-xs font-semibold truncate">{person.name}</span>
-          </div>
-        </div>
-        <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
-          <DMBubble initials={person.initials}>Hey — got a sec to look at the Q3 outline?</DMBubble>
-          <DMBubble initials={person.initials}>I dropped the latest pass into the canvas.</DMBubble>
-          <div className="flex gap-2">
-            <div className="h-7 w-7 shrink-0 rounded-full bg-neutral-800 text-white text-[10px] font-semibold flex items-center justify-center">
-              {person.initials}
-            </div>
-            <div className="rounded-md border border-neutral-200 bg-white p-3 max-w-[85%] space-y-2">
-              <p className="text-xs text-neutral-800 leading-snug">
-                I just tagged you in this workflow:{" "}
-                <span className="font-medium">[Q3 Campaign Outline]</span>
-              </p>
-              <button
-                onClick={onJumpToCanvas}
-                className="w-full px-3 py-1.5 rounded-md bg-neutral-900 text-white text-[11px] font-medium hover:bg-neutral-700"
-              >
-                View in Canvas
-              </button>
-            </div>
-          </div>
-          {myMsgs.map((m, i) => (
-            <div key={i} className="flex justify-end">
-              <div className="rounded-md bg-neutral-900 text-white px-3 py-2 max-w-[85%] text-xs leading-snug">
-                {m.text}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="border-t border-neutral-200 p-2">
-          <div className="flex items-end gap-2 rounded-xl border border-neutral-200 bg-white px-2 py-1.5">
-            <button className="p-1 text-neutral-500 hover:text-neutral-800" aria-label="Attach">
-              <Paperclip className="h-4 w-4" />
-            </button>
-            <textarea
-              value={dmInput}
-              onChange={(e) => setDmInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  sendDM();
-                }
-              }}
-              rows={1}
-              placeholder={`Message ${person.name}…`}
-              className="flex-1 resize-none bg-transparent outline-none text-sm placeholder:text-neutral-400 max-h-24 py-1"
-            />
-            <button
-              onClick={sendDM}
-              className="px-2.5 py-1.5 rounded-md bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-700 flex items-center gap-1"
-            >
-              <Send className="h-3.5 w-3.5" /> Send
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const dms: { name: string; initials: string; unread: number }[] = [];
+  void openDM;
+  void onJumpToCanvas;
 
   return (
     <div className="p-3 space-y-4">
       <div>
         <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-1 px-1">Channels</p>
-        {["#marketing", "#brand", "#campaigns", "#general"].map((c) => (
-          <Row key={c} title={c} sub="" />
-        ))}
+        <p className="text-xs text-neutral-500 text-center py-4">No messages yet.</p>
       </div>
       <div>
         <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-1 px-1">Direct Messages</p>
+        {dms.length === 0 && (
+          <p className="text-xs text-neutral-500 text-center py-4">No messages yet.</p>
+        )}
         {dms.map((d) => (
           <button
             key={d.name}
