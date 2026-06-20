@@ -7,6 +7,22 @@ import {
   RefreshCw, Download,
 } from "lucide-react";
 
+const BACKEND_URL = "https://b00dee1a-faf6-4ce1-acba-96e99e4523cb-00-2lowjfdxf78br.spock.replit.dev";
+
+function getUserId(): string {
+  if (typeof window === "undefined") return "";
+  const KEY = "company_brain_user_id";
+  let id = window.localStorage.getItem(KEY);
+  if (!id) {
+    id =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `u_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    window.localStorage.setItem(KEY, id);
+  }
+  return id;
+}
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -490,14 +506,39 @@ function ProfilePanel() {
 
 /* ---------------- Column 3: Canvas ---------------- */
 function Canvas({ active }: { active: RailKey }) {
-  const [messages, setMessages] = useState<string[]>([]);
+  type Msg = { role: "user" | "assistant"; text: string; memory_context?: string };
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
-  const [isProcessing, setIsProcessing] = useState(true);
-  const send = () => {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const send = async () => {
     const t = input.trim();
-    if (!t) return;
-    setMessages((prev) => [...prev, t]);
+    if (!t || isProcessing) return;
+    setMessages((prev) => [...prev, { role: "user", text: t }]);
     setInput("");
+    setIsProcessing(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: getUserId(),
+          message: t,
+          model: "gemini/gemini-3.1-flash-lite",
+        }),
+      });
+      const data = await res.json().catch(() => ({} as Record<string, unknown>));
+      const reply =
+        (data as { response?: string; reply?: string; message?: string }).response ??
+        (data as { reply?: string }).reply ??
+        (data as { message?: string }).message ??
+        "";
+      const memory_context = (data as { memory_context?: string }).memory_context;
+      setMessages((prev) => [...prev, { role: "assistant", text: reply, memory_context }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", text: "Failed to reach backend." }]);
+    } finally {
+      setIsProcessing(false);
+    }
   };
   return (
     <section className="flex flex-col flex-1 min-w-0 h-full">
@@ -513,18 +554,32 @@ function Canvas({ active }: { active: RailKey }) {
       </header>
 
       <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
-        <div className="text-xs text-neutral-500">
-          Generated from <span className="font-medium text-neutral-800">Brand_Guide.pdf</span> + <span className="font-medium text-neutral-800">Q4_Strategy.docx</span>
-        </div>
-        <OutputBlock />
-        <GeneratedAssetBlock />
-        {messages.map((m, i) => (
-          <div key={i} className="max-w-3xl flex justify-end">
-            <div className="rounded-md bg-neutral-900 text-white px-3 py-2 text-sm max-w-[85%] leading-snug">
-              {m}
-            </div>
+        {messages.length === 0 && !isProcessing && (
+          <div className="h-full flex items-center justify-center">
+            <p className="text-xs text-neutral-500">Start a conversation to generate outputs.</p>
           </div>
-        ))}
+        )}
+        {messages.map((m, i) =>
+          m.role === "user" ? (
+            <div key={i} className="max-w-3xl flex justify-end">
+              <div className="rounded-md bg-neutral-900 text-white px-3 py-2 text-sm max-w-[85%] leading-snug whitespace-pre-wrap">
+                {m.text}
+              </div>
+            </div>
+          ) : (
+            <div key={i} className="max-w-3xl space-y-2">
+              <div className="rounded-md bg-neutral-100 text-neutral-900 px-3 py-2 text-sm max-w-[85%] leading-snug whitespace-pre-wrap">
+                {m.text}
+              </div>
+              {m.memory_context && (
+                <div className="max-w-[85%] rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-[11px] text-neutral-600 leading-snug">
+                  <div className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Memory context</div>
+                  <p className="whitespace-pre-wrap">{m.memory_context}</p>
+                </div>
+              )}
+            </div>
+          )
+        )}
       </div>
 
       <div className="border-t border-neutral-200 p-3">
@@ -533,19 +588,13 @@ function Canvas({ active }: { active: RailKey }) {
             <Loader2 className="h-3.5 w-3.5 text-neutral-500 animate-spin" />
             <div className="flex-1 min-w-0">
               <div className="text-xs font-medium text-neutral-800">
-                Agent syncing workspace data
+                Generating response
                 <span className="inline-block animate-pulse">…</span>
               </div>
               <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-neutral-200">
                 <div className="h-full w-1/3 animate-pulse rounded-full bg-neutral-400" />
               </div>
             </div>
-            <button
-              onClick={() => setIsProcessing(false)}
-              className="text-[10px] text-neutral-500 hover:text-neutral-900"
-            >
-              Dismiss
-            </button>
           </div>
         )}
         <div className="mx-auto max-w-3xl flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 shadow-sm">
