@@ -3,7 +3,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import {
   Briefcase, MessageSquare, Link2, FileEdit, Calendar, LayoutGrid, User,
   X, Send, Paperclip, Plus, MoreHorizontal, ArrowLeft, AtSign, FileText, Copy, Share2,
-  Upload, Trash2, CheckCircle2, Loader2,
+  Upload, Trash2, Loader2,
   RefreshCw, Download,
 } from "lucide-react";
 
@@ -463,54 +463,9 @@ const INITIAL_APPS: AppItem[] = [
 ];
 
 function AppGrid({ layout }: { layout: "grid" | "list" }) {
-  const [apps, setApps] = useState<AppItem[]>(INITIAL_APPS);
-  const [selected, setSelected] = useState<string | null>(null);
-
-  if (selected) {
-    const app = apps.find((a) => a.name === selected)!;
-    const toggle = () =>
-      setApps((prev) => prev.map((a) => (a.name === app.name ? { ...a, connected: !a.connected } : a)));
-    return (
-      <div className="p-3 space-y-4">
-        <button
-          onClick={() => setSelected(null)}
-          className="flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back
-        </button>
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-md bg-neutral-200 flex items-center justify-center text-sm font-semibold text-neutral-700">
-            {app.name.slice(0, 2)}
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm font-semibold">{app.name}</div>
-            <div className="text-[10px] text-neutral-500">Nango OAuth integration</div>
-          </div>
-        </div>
-        <p className="text-xs text-neutral-600 leading-relaxed">{app.description}</p>
-        {app.connected ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-green-50 border border-green-200 text-green-700 text-xs font-medium w-fit">
-              <CheckCircle2 className="h-3.5 w-3.5" /> Connected
-            </div>
-            <button
-              onClick={toggle}
-              className="text-[11px] text-neutral-500 hover:text-neutral-900 underline underline-offset-2"
-            >
-              Disconnect
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={toggle}
-            className="w-full px-3 py-2.5 rounded-md bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-700"
-          >
-            Connect Account
-          </button>
-        )}
-      </div>
-    );
-  }
+  const [apps] = useState<AppItem[]>(INITIAL_APPS);
+  const navigate = useNavigate();
+  const openTool = (name: string) => navigate({ to: "/connect/$tool", params: { tool: name } });
 
   if (layout === "list") {
     return (
@@ -518,7 +473,7 @@ function AppGrid({ layout }: { layout: "grid" | "list" }) {
         {apps.map((a) => (
           <button
             key={a.name}
-            onClick={() => setSelected(a.name)}
+            onClick={() => openTool(a.name)}
             className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-neutral-50 text-left"
           >
             <div className="h-7 w-7 shrink-0 rounded bg-neutral-200 flex items-center justify-center text-[10px] font-semibold text-neutral-700">
@@ -543,7 +498,7 @@ function AppGrid({ layout }: { layout: "grid" | "list" }) {
         {apps.map((a) => (
           <button
             key={a.name}
-            onClick={() => setSelected(a.name)}
+            onClick={() => openTool(a.name)}
             className="relative aspect-square rounded-md border border-neutral-200 hover:bg-neutral-50 flex flex-col items-center justify-center gap-1"
           >
             {a.connected && (
