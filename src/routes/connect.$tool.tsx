@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { ArrowLeft, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import Nango from "@nangohq/frontend";
 
@@ -8,15 +8,6 @@ export const Route = createFileRoute("/connect/$tool")({
 });
 
 const BACKEND = "https://b00dee1a-faf6-4ce1-acba-96e99e4523cb-00-2lowjfdxf78br.spock.replit.dev";
-
-type FieldConfig = { key: string; label: string; placeholder: string; type?: string };
-
-const TOOL_FIELDS: Record<string, FieldConfig[]> = {
-  Notion: [
-    { key: "integration_token", label: "Integration Token", placeholder: "secret_xxxx..." },
-    { key: "page_or_database_id", label: "Page or Database ID", placeholder: "Paste your Notion page or database ID" },
-  ],
-};
 
 function getUserId(): string {
   if (typeof window === "undefined") return "";
@@ -35,9 +26,7 @@ function getUserId(): string {
 function ConnectToolPage() {
   const { tool } = Route.useParams();
   const navigate = useNavigate();
-  const fields = useMemo(() => TOOL_FIELDS[tool] ?? [], [tool]);
 
-  const [values, setValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
@@ -47,10 +36,11 @@ function ConnectToolPage() {
     setLoading(true);
     try {
       const user_id = getUserId();
+      const integration_id = tool.toLowerCase();
       const res = await fetch(`${BACKEND}/api/nango/session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id, tool, ...values }),
+        body: JSON.stringify({ user_id, integration_id }),
       });
       if (!res.ok) throw new Error("session failed");
       const data = await res.json();
@@ -110,30 +100,13 @@ function ConnectToolPage() {
                 Connect your {tool} account to let Marketing Brain pull context from it.
               </p>
 
-              {fields.length > 0 && (
-                <div className="space-y-3">
-                  {fields.map((f) => (
-                    <div key={f.key} className="space-y-1">
-                      <label className="text-[11px] font-medium text-neutral-700">{f.label}</label>
-                      <input
-                        type={f.type ?? "text"}
-                        value={values[f.key] ?? ""}
-                        onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
-                        placeholder={f.placeholder}
-                        className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-400"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
               <button
                 onClick={handleConnect}
                 disabled={loading}
                 className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-md bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-700 disabled:opacity-60"
               >
                 {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                Connect {tool}
+                Connect Account
               </button>
 
               {error && (
