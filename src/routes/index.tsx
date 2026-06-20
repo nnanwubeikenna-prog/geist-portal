@@ -7,6 +7,22 @@ import {
   RefreshCw, Download,
 } from "lucide-react";
 
+const BACKEND_URL = "https://b00dee1a-faf6-4ce1-acba-96e99e4523cb-00-2lowjfdxf78br.spock.replit.dev";
+
+function getUserId(): string {
+  if (typeof window === "undefined") return "";
+  const KEY = "company_brain_user_id";
+  let id = window.localStorage.getItem(KEY);
+  if (!id) {
+    id =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `u_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    window.localStorage.setItem(KEY, id);
+  }
+  return id;
+}
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -139,8 +155,8 @@ function ContextColumn({
         {active === "work" && <WorkPanel tab={workTab} setTab={setWorkTab} />}
         {active === "chat" && <ChatListPanel onJumpToCanvas={onJumpToCanvas} />}
         {active === "link" && <LinkPanel />}
-        {active === "drafts" && <SimpleList title="Drafts" items={["Q4 Campaign Brief", "Product Launch Memo", "Newsletter Draft"]} />}
-        {active === "calendar" && <SimpleList title="Upcoming" items={["Standup — 9:00", "Brand Review — 11:30", "1:1 with Alex — 14:00"]} />}
+        {active === "drafts" && <SimpleList title="Drafts" items={[]} emptyMessage="No drafts yet." />}
+        {active === "calendar" && <SimpleList title="Upcoming" items={[]} emptyMessage="No upcoming events." />}
         {active === "apps" && <LinkPanel />}
         {active === "profile" && <ProfilePanel />}
       </div>
@@ -152,17 +168,8 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
   const tabs: WorkTab[] = ["files", "people", "tools"];
   const [fileView, setFileView] = useState<"dashboard" | "manager">("dashboard");
   const [selectedPerson, setSelectedPerson] = useState<null | { name: string; role: string; initials: string }>(null);
-  const [files, setFiles] = useState([
-    { name: "Brand_Guide.pdf", date: "Mar 12, 2026" },
-    { name: "Q4_Strategy.docx", date: "May 28, 2026" },
-    { name: "Audience_Research.xlsx", date: "May 30, 2026" },
-  ]);
-  const people = [
-    { name: "Jason M.", role: "Head of Q3 Launch", initials: "JM" },
-    { name: "Alex Reed", role: "Brand Lead", initials: "AR" },
-    { name: "Jordan Kim", role: "Content Strategist", initials: "JK" },
-    { name: "Sam Patel", role: "Performance Marketing", initials: "SP" },
-  ];
+  const [files, setFiles] = useState<{ name: string; date: string }[]>([]);
+  const people: { name: string; role: string; initials: string }[] = [];
   return (
     <div className="flex flex-col">
       <div className="flex gap-1 border-b border-neutral-200 px-2">
@@ -181,18 +188,13 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => setFileView("manager")} className="text-left">
-                <Metric n="12" label="Files" interactive />
+                <Metric n={String(files.length)} label="Files" interactive />
               </button>
-              <Metric n="4" label="Sources" />
+              <Metric n="0" label="Sources" />
             </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-2">Suggested Actions</p>
-              <div className="flex flex-col gap-1.5">
-                {["Summarize brand guide", "Draft a launch email", "Generate campaign ideas"].map((s) => (
-                  <button key={s} className="text-left text-xs px-3 py-2 rounded-md border border-neutral-200 hover:bg-neutral-50">{s}</button>
-                ))}
-              </div>
-            </div>
+            {files.length === 0 && (
+              <p className="text-xs text-neutral-500 text-center py-4">No files yet. Upload your first file.</p>
+            )}
           </div>
         )}
         {tab === "files" && fileView === "manager" && (
@@ -211,6 +213,9 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
               <Upload className="h-3.5 w-3.5" /> Upload New File
             </button>
             <div className="space-y-1">
+              {files.length === 0 && (
+                <p className="text-xs text-neutral-500 text-center py-6">No files yet. Upload your first file.</p>
+              )}
               {files.map((f) => (
                 <div key={f.name} className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-neutral-50">
                   <div className="h-7 w-7 shrink-0 rounded bg-neutral-200 flex items-center justify-center">
@@ -234,6 +239,9 @@ function WorkPanel({ tab, setTab }: { tab: WorkTab; setTab: (t: WorkTab) => void
         )}
         {tab === "people" && !selectedPerson && (
           <div className="space-y-1">
+            {people.length === 0 && (
+              <p className="text-xs text-neutral-500 text-center py-6">No team members yet.</p>
+            )}
             {people.map((p) => (
               <button
                 key={p.name}
@@ -297,111 +305,21 @@ function DetailRow({ k, v }: { k: string; v: string }) {
 
 function ChatListPanel({ onJumpToCanvas }: { onJumpToCanvas: () => void }) {
   const [openDM, setOpenDM] = useState<string | null>(null);
-  const [dmMessages, setDmMessages] = useState<Record<string, { from: "me" | "them"; text: string }[]>>({});
-  const [dmInput, setDmInput] = useState("");
-  const dms = [
-    { name: "Jason M.", initials: "JM", unread: 1 },
-    { name: "Alex Reed", initials: "AR", unread: 0 },
-    { name: "Jordan Kim", initials: "JK", unread: 0 },
-    { name: "Sam Patel", initials: "SP", unread: 0 },
-  ];
-
-  if (openDM) {
-    const person = dms.find((d) => d.name === openDM)!;
-    const myMsgs = dmMessages[openDM] ?? [];
-    const sendDM = () => {
-      const t = dmInput.trim();
-      if (!t) return;
-      setDmMessages((prev) => ({
-        ...prev,
-        [openDM]: [...(prev[openDM] ?? []), { from: "me", text: t }],
-      }));
-      setDmInput("");
-    };
-    return (
-      <div className="flex flex-col h-full">
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-neutral-200">
-          <button
-            onClick={() => setOpenDM(null)}
-            className="flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back
-          </button>
-          <div className="ml-2 flex items-center gap-2 min-w-0">
-            <div className="h-6 w-6 rounded-full bg-neutral-800 text-white text-[9px] font-semibold flex items-center justify-center">
-              {person.initials}
-            </div>
-            <span className="text-xs font-semibold truncate">{person.name}</span>
-          </div>
-        </div>
-        <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
-          <DMBubble initials={person.initials}>Hey — got a sec to look at the Q3 outline?</DMBubble>
-          <DMBubble initials={person.initials}>I dropped the latest pass into the canvas.</DMBubble>
-          <div className="flex gap-2">
-            <div className="h-7 w-7 shrink-0 rounded-full bg-neutral-800 text-white text-[10px] font-semibold flex items-center justify-center">
-              {person.initials}
-            </div>
-            <div className="rounded-md border border-neutral-200 bg-white p-3 max-w-[85%] space-y-2">
-              <p className="text-xs text-neutral-800 leading-snug">
-                I just tagged you in this workflow:{" "}
-                <span className="font-medium">[Q3 Campaign Outline]</span>
-              </p>
-              <button
-                onClick={onJumpToCanvas}
-                className="w-full px-3 py-1.5 rounded-md bg-neutral-900 text-white text-[11px] font-medium hover:bg-neutral-700"
-              >
-                View in Canvas
-              </button>
-            </div>
-          </div>
-          {myMsgs.map((m, i) => (
-            <div key={i} className="flex justify-end">
-              <div className="rounded-md bg-neutral-900 text-white px-3 py-2 max-w-[85%] text-xs leading-snug">
-                {m.text}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="border-t border-neutral-200 p-2">
-          <div className="flex items-end gap-2 rounded-xl border border-neutral-200 bg-white px-2 py-1.5">
-            <button className="p-1 text-neutral-500 hover:text-neutral-800" aria-label="Attach">
-              <Paperclip className="h-4 w-4" />
-            </button>
-            <textarea
-              value={dmInput}
-              onChange={(e) => setDmInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  sendDM();
-                }
-              }}
-              rows={1}
-              placeholder={`Message ${person.name}…`}
-              className="flex-1 resize-none bg-transparent outline-none text-sm placeholder:text-neutral-400 max-h-24 py-1"
-            />
-            <button
-              onClick={sendDM}
-              className="px-2.5 py-1.5 rounded-md bg-neutral-900 text-white text-xs font-medium hover:bg-neutral-700 flex items-center gap-1"
-            >
-              <Send className="h-3.5 w-3.5" /> Send
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const dms: { name: string; initials: string; unread: number }[] = [];
+  void openDM;
+  void onJumpToCanvas;
 
   return (
     <div className="p-3 space-y-4">
       <div>
         <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-1 px-1">Channels</p>
-        {["#marketing", "#brand", "#campaigns", "#general"].map((c) => (
-          <Row key={c} title={c} sub="" />
-        ))}
+        <p className="text-xs text-neutral-500 text-center py-4">No messages yet.</p>
       </div>
       <div>
         <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-1 px-1">Direct Messages</p>
+        {dms.length === 0 && (
+          <p className="text-xs text-neutral-500 text-center py-4">No messages yet.</p>
+        )}
         {dms.map((d) => (
           <button
             key={d.name}
@@ -536,11 +454,15 @@ function Row({ title, sub, avatar }: { title: string; sub?: string; avatar?: boo
   );
 }
 
-function SimpleList({ title, items }: { title: string; items: string[] }) {
+function SimpleList({ title, items, emptyMessage }: { title: string; items: string[]; emptyMessage?: string }) {
   return (
     <div className="p-3">
       <p className="text-[11px] uppercase tracking-wider text-neutral-500 mb-2">{title}</p>
-      {items.map((i) => <Row key={i} title={i} />)}
+      {items.length === 0 && emptyMessage ? (
+        <p className="text-xs text-neutral-500 text-center py-4">{emptyMessage}</p>
+      ) : (
+        items.map((i) => <Row key={i} title={i} />)
+      )}
     </div>
   );
 }
@@ -584,14 +506,39 @@ function ProfilePanel() {
 
 /* ---------------- Column 3: Canvas ---------------- */
 function Canvas({ active }: { active: RailKey }) {
-  const [messages, setMessages] = useState<string[]>([]);
+  type Msg = { role: "user" | "assistant"; text: string; memory_context?: string };
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
-  const [isProcessing, setIsProcessing] = useState(true);
-  const send = () => {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const send = async () => {
     const t = input.trim();
-    if (!t) return;
-    setMessages((prev) => [...prev, t]);
+    if (!t || isProcessing) return;
+    setMessages((prev) => [...prev, { role: "user", text: t }]);
     setInput("");
+    setIsProcessing(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: getUserId(),
+          message: t,
+          model: "gemini/gemini-3.1-flash-lite",
+        }),
+      });
+      const data = await res.json().catch(() => ({} as Record<string, unknown>));
+      const reply =
+        (data as { response?: string; reply?: string; message?: string }).response ??
+        (data as { reply?: string }).reply ??
+        (data as { message?: string }).message ??
+        "";
+      const memory_context = (data as { memory_context?: string }).memory_context;
+      setMessages((prev) => [...prev, { role: "assistant", text: reply, memory_context }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", text: "Failed to reach backend." }]);
+    } finally {
+      setIsProcessing(false);
+    }
   };
   return (
     <section className="flex flex-col flex-1 min-w-0 h-full">
@@ -607,18 +554,32 @@ function Canvas({ active }: { active: RailKey }) {
       </header>
 
       <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
-        <div className="text-xs text-neutral-500">
-          Generated from <span className="font-medium text-neutral-800">Brand_Guide.pdf</span> + <span className="font-medium text-neutral-800">Q4_Strategy.docx</span>
-        </div>
-        <OutputBlock />
-        <GeneratedAssetBlock />
-        {messages.map((m, i) => (
-          <div key={i} className="max-w-3xl flex justify-end">
-            <div className="rounded-md bg-neutral-900 text-white px-3 py-2 text-sm max-w-[85%] leading-snug">
-              {m}
-            </div>
+        {messages.length === 0 && !isProcessing && (
+          <div className="h-full flex items-center justify-center">
+            <p className="text-xs text-neutral-500">Start a conversation to generate outputs.</p>
           </div>
-        ))}
+        )}
+        {messages.map((m, i) =>
+          m.role === "user" ? (
+            <div key={i} className="max-w-3xl flex justify-end">
+              <div className="rounded-md bg-neutral-900 text-white px-3 py-2 text-sm max-w-[85%] leading-snug whitespace-pre-wrap">
+                {m.text}
+              </div>
+            </div>
+          ) : (
+            <div key={i} className="max-w-3xl space-y-2">
+              <div className="rounded-md bg-neutral-100 text-neutral-900 px-3 py-2 text-sm max-w-[85%] leading-snug whitespace-pre-wrap">
+                {m.text}
+              </div>
+              {m.memory_context && (
+                <div className="max-w-[85%] rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-[11px] text-neutral-600 leading-snug">
+                  <div className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">Memory context</div>
+                  <p className="whitespace-pre-wrap">{m.memory_context}</p>
+                </div>
+              )}
+            </div>
+          )
+        )}
       </div>
 
       <div className="border-t border-neutral-200 p-3">
@@ -627,19 +588,13 @@ function Canvas({ active }: { active: RailKey }) {
             <Loader2 className="h-3.5 w-3.5 text-neutral-500 animate-spin" />
             <div className="flex-1 min-w-0">
               <div className="text-xs font-medium text-neutral-800">
-                Agent syncing workspace data
+                Generating response
                 <span className="inline-block animate-pulse">…</span>
               </div>
               <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-neutral-200">
                 <div className="h-full w-1/3 animate-pulse rounded-full bg-neutral-400" />
               </div>
             </div>
-            <button
-              onClick={() => setIsProcessing(false)}
-              className="text-[10px] text-neutral-500 hover:text-neutral-900"
-            >
-              Dismiss
-            </button>
           </div>
         )}
         <div className="mx-auto max-w-3xl flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 shadow-sm">
