@@ -59,9 +59,10 @@ function ConnectToolPage() {
 
       const nango = new Nango({ connectSessionToken: token });
       nango.openConnectUI({
-        onEvent: (event: { type: string; payload?: { connectionId?: string } }) => {
+        onEvent: (event) => {
           if (event.type === "connect") {
-            const connection_id = event.payload?.connectionId ?? "";
+            const payload = event.payload as { connectionId?: string } | undefined;
+            const connection_id = payload?.connectionId ?? "";
             fetch(`${BACKEND}/api/connect`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
